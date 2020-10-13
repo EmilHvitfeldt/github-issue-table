@@ -178,38 +178,42 @@ issues %>%
       searchInputStyle = list(width = "100%")
     ),
     
+    # All columns have Custom Set Name
+    # All but last column have pre-specified width set
+    # Cell modification is done with functions
+    # Columns which uses html formatting have `html = TRUE` to render html
     columns = list(
       title = colDef(
         name = "Title",
-        html = TRUE,
-        width = 500
+        width = 500,
+        html = TRUE
         ),
       repository = colDef(
         name = "Repository",
         width = 250,
-        html = TRUE, 
-        cell = extract_github_url
+        cell = extract_github_url,
+        html = TRUE,
         ),
       comments = colDef(
         name = "Comments",
         width = 100
         ),
-      labels = colDef(
-        name = "Labels",
-        html = TRUE,
-        cell = style_labels,
-        filterable = FALSE
-        ),
       created_at = colDef(
         name = "Created",
-        cell = date_format, 
         width = 120,
+        cell = date_format, 
         filterable = FALSE
         ),
       updated_at = colDef(
         name = "Updated",
-        cell = date_format, 
         width = 120,
+        cell = date_format, 
+        filterable = FALSE
+        ),
+      labels = colDef(
+        name = "Labels",
+        cell = style_labels,
+        html = TRUE,
         filterable = FALSE
         )
       )
