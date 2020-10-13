@@ -1,0 +1,187 @@
+---
+title: "Issue Dashboard"
+author: "Emil Hvitfeldt"
+output: 
+  flexdashboard::flex_dashboard
+---
+
+```{css}
+a:link {
+  color: black;
+}
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+library(reactable)
+library(tidyverse)
+library(glue)
+library(gh)
+library(emo)
+library(htmltools)
+library(farver)
+```
+
+```{r repos}
+repos <- c(
+  "Tidymodels/themis",
+  "Tidymodels/textrecipes",
+  "EmilHvitfeldt/prismatic",
+  "EmilHvitfeldt/hcandersenr",
+  "EmilHvitfeldt/paletteer",
+  "EmilHvitfeldt/textdata",
+  "EmilHvitfeldt/ggpage",
+  "EmilHvitfeldt/ElizabethWarrenMeme",
+  "EmilHvitfeldt/tilemapr",
+  "EmilHvitfeldt/ggtetris",
+  "EmilHvitfeldt/cookiemonster",
+  "EmilHvitfeldt/tripleblind",
+  "EmilHvitfeldt/horus",
+  "EmilHvitfeldt/walmartAPI",
+  "EmilHvitfeldt/offensiveR",
+  "EmilHvitfeldt/recap",
+  "EmilHvitfeldt/ehlib",
+  "EmilHvitfeldt/ggshapes",
+  "EmilHvitfeldt/quickpalette",
+  "EmilHvitfeldt/miscpalettes",
+  "EmilHvitfeldt/ggshuffle",
+  "EmilHvitfeldt/gganonymize",
+  "EmilHvitfeldt/unitscales",
+  "EmilHvitfeldt/glyphextra"
+)
+```
+
+```{r parsing}
+all_issues <- function(repo) {
+  map_dfr(repo, github_summary)
+}
+
+github_summary <- function(repo) {
+  x <- gh(glue("/repos/{repo}/issues"))
+  
+  map_dfr(x, issue_summary) 
+}
+
+issue_summary <- function(x) {
+  list(
+    repository = x$repository_url,
+    title = x$title,
+    issue_url = x$html_url,
+    created_at = x$created_at,
+    updated_at = x$updated_at,
+    comments = x$comments,
+    labels = list(x$labels)
+  )
+}
+```
+
+```{r, download}
+issues <- all_issues(repos) %>%
+  mutate(title = glue('<a href="{issue_url}">{title}</a>')) %>%
+  select(-issue_url)
+```
+
+```{r, tidiers}
+substitute_emoji <- function(x) {
+  m <- gregexpr(":[^[:space:]]+:", x)
+  regmatches(x, m) <- lapply(regmatches(x, m), function(xx) map_chr(gsub(":", "", xx), emo::ji))
+  x
+}
+
+collapse_labels <- function(x) {
+  substitute_emoji(paste(map_chr(x, "name"), collapse = ", "))
+}
+
+date_format <- function(value) {
+  str_sub(value, 1, 10)
+}
+
+remove_api_url <- function(x) {
+  url <- str_remove(x, "api\\.")
+  str_remove(url, "repos/")
+}
+
+extract_github_url <- function(value) {
+  url <- remove_api_url(value)
+  
+  text <- str_remove(url, "https://github.com/")
+  glue('<a href="{url}">{text}</a>')
+}
+```
+
+```{r}
+color_flip <- function(x) {
+  x <- paste0("#", x)
+  color_lightness <- farver::convert_colour(t(col2rgb(x)), "rgb", "hsl")[, "l"]
+  ifelse(color_lightness > 31, "#010101", "#FFFFFF")
+}
+
+style_label <- function(x) {
+  a(substitute_emoji(x$name), 
+    href = remove_api_url(x$url), 
+    style = glue("background: #{x$color};
+                  padding: 0 7px;
+                  color: {color_flip(x$color)};
+                  text-decoration: none;
+                  border-radius: 2em;"))
+}
+
+style_labels <- function(x) {
+  span(map(x, style_label))
+}
+```
+
+```{r table}
+issues %>%
+  reactable(
+    highlight = TRUE,
+    searchable = TRUE,
+    wrap = FALSE,
+    defaultPageSize = 18,
+    minRows = 18,
+    defaultSortOrder = "desc",
+    defaultSorted = "updated_at",
+    
+    theme = reactableTheme(
+      searchInputStyle = list(width = "100%")
+    ),
+    
+    columns = list(
+      title = colDef(
+        name = "Title",
+        html = TRUE,
+        width = 500
+        ),
+      repository = colDef(
+        name = "Repository",
+        width = 250,
+        html = TRUE, 
+        cell = extract_github_url
+        ),
+      comments = colDef(
+        name = "Comments",
+        width = 100
+        ),
+      labels = colDef(
+        name = "Labels",
+        html = TRUE,
+        cell = style_labels,
+        filterable = FALSE
+        ),
+      created_at = colDef(
+        name = "Created",
+        cell = date_format, 
+        width = 120,
+        filterable = FALSE
+        ),
+      updated_at = colDef(
+        name = "Updated",
+        cell = date_format, 
+        width = 120,
+        filterable = FALSE
+        )
+      )
+    )
+```
+
