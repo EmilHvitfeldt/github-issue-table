@@ -24,6 +24,9 @@ library(farver)
 ```
 
 ```{r repos}
+# Include repositories you want to follow in the format {owner}/{repository}. 
+# Doesn't have to be owned or operated by you.
+
 repos <- c(
   "Tidymodels/themis",
   "Tidymodels/textrecipes",
@@ -53,16 +56,31 @@ repos <- c(
 ```
 
 ```{r parsing}
+#' Read all issues from repositories
+#'
+#' @param repo Character vector of repositories in the format "owner/name".
+#'
+#' @return tibble with 1 row per issue.
 all_issues <- function(repo) {
   map_dfr(repo, github_summary)
 }
 
+#' Read all issues from 1 repository
+#'
+#' @param repo Character of repository in the format "owner/name".
+#'
+#' @return tibble with 1 row per issue.
 github_summary <- function(repo) {
   x <- gh(glue("/repos/{repo}/issues"))
   
   map_dfr(x, issue_summary) 
 }
 
+#' Extract relevant issue information
+#'
+#' @param repo Output from [gh::gh()]
+#'
+#' @return List with 7 elements.
 issue_summary <- function(x) {
   list(
     repository = x$repository_url,
@@ -77,31 +95,33 @@ issue_summary <- function(x) {
 ```
 
 ```{r, download}
+# Download all issues
 issues <- all_issues(repos) %>%
+  # Combine issue_url and title
   mutate(title = glue('<a href="{issue_url}">{title}</a>')) %>%
   select(-issue_url)
 ```
 
 ```{r, tidiers}
+# Replaces github style emojies with emojies using [emo::ji]
 substitute_emoji <- function(x) {
   m <- gregexpr(":[^[:space:]]+:", x)
   regmatches(x, m) <- lapply(regmatches(x, m), function(xx) map_chr(gsub(":", "", xx), emo::ji))
   x
 }
 
-collapse_labels <- function(x) {
-  substitute_emoji(paste(map_chr(x, "name"), collapse = ", "))
-}
-
+# Turns date format into 2020-01-01 format
 date_format <- function(value) {
   str_sub(value, 1, 10)
 }
 
+# Removes `api` and `repos` from Github url
 remove_api_url <- function(x) {
   url <- str_remove(x, "api\\.")
   str_remove(url, "repos/")
 }
 
+# Extracts `owner/name` part from github url and create a tag with link to repository
 extract_github_url <- function(value) {
   url <- remove_api_url(value)
   
@@ -111,12 +131,15 @@ extract_github_url <- function(value) {
 ```
 
 ```{r}
+# Takes a color and returns white or black depending on what would be the best 
+# text color for that background color
 color_flip <- function(x) {
   x <- paste0("#", x)
   color_lightness <- farver::convert_colour(t(col2rgb(x)), "rgb", "hsl")[, "l"]
   ifelse(color_lightness > 31, "#010101", "#FFFFFF")
 }
 
+# Style 1 github issue label to look like label on Website
 style_label <- function(x) {
   a(substitute_emoji(x$name), 
     href = remove_api_url(x$url), 
@@ -127,6 +150,7 @@ style_label <- function(x) {
                   border-radius: 2em;"))
 }
 
+# Styles n labels and combine them in a span
 style_labels <- function(x) {
   span(map(x, style_label))
 }
@@ -137,12 +161,19 @@ issues %>%
   reactable(
     highlight = TRUE,
     searchable = TRUE,
+    
+    # Stopping long lines of text wrapping to keep table height consistent 
     wrap = FALSE,
+    
+    # Personally customized to fit my screen size and zoom level 
     defaultPageSize = 18,
     minRows = 18,
-    defaultSortOrder = "desc",
-    defaultSorted = "updated_at",
     
+    # Sort table by such that most recently updated issue is at the top by default
+    defaultSorted = "updated_at",
+    defaultSortOrder = "desc",
+    
+    # Sets the searchbar to be 100% width
     theme = reactableTheme(
       searchInputStyle = list(width = "100%")
     ),
