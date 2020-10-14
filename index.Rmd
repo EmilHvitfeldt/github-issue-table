@@ -51,7 +51,29 @@ repos <- c(
   "EmilHvitfeldt/ggshuffle",
   "EmilHvitfeldt/gganonymize",
   "EmilHvitfeldt/unitscales",
-  "EmilHvitfeldt/glyphextra"
+  "EmilHvitfeldt/glyphextra",
+  "EmilHvitfeldt/R-text-data",
+  "EmilHvitfeldt/percentify",
+  "EmilHvitfeldt/inlinexaringan",
+  "EmilHvitfeldt/tidygutenbergr",
+  "EmilHvitfeldt/bookdown-github-actions-netlify",
+  "EmilHvitfeldt/refactoring-r",
+  "EmilHvitfeldt/extrasteps",
+  "EmilHvitfeldt/wordvectors-in-r",
+  "EmilHvitfeldt/r-color-palettes",
+  "EmilHvitfeldt/color-resources",
+  "EmilHvitfeldt/genderify",
+  "EmilHvitfeldt/scotus",
+  "EmilHvitfeldt/useR2020-text-modeling-tutorial",
+  "EmilHvitfeldt/paletteerbot",
+  "EmilHvitfeldt/survnip",
+  "EmilHvitfeldt/friends",
+  "EmilHvitfeldt/wordsalad",
+  "EmilHvitfeldt/palette2vec",
+  "EmilHvitfeldt/talks",
+  "EmilHvitfeldt/animals",
+  "EmilHvitfeldt/ehhaddins",
+  "EmilHvitfeldt/github-issue-table"
 )
 ```
 
